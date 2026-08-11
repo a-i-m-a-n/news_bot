@@ -1,5 +1,5 @@
-crewai
-google-generativeai
+crewai[google-genai]
+google-genai
 google-api-python-client
 google-auth
 requests
