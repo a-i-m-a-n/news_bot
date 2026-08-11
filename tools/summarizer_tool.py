@@ -1,19 +1,19 @@
 import os
 from crewai.tools import tool
-import google.generativeai as genai
+from google import genai
 
 _MODEL_NAME = "gemini-3.1-flash-lite"
-_configured = False
+_client = None
 
 
-def _ensure_configured():
-    global _configured
-    if not _configured:
+def _get_client():
+    global _client
+    if _client is None:
         api_key = os.environ.get("GEMINI_API_KEY")
         if not api_key:
             raise RuntimeError("GEMINI_API_KEY is not set.")
-        genai.configure(api_key=api_key)
-        _configured = True
+        _client = genai.Client(api_key=api_key)
+    return _client
 
 
 @tool("Intelligent Summarizer Tool")
@@ -25,8 +25,7 @@ def summarize_articles(articles_text: str) -> str:
     Args:
         articles_text: Raw text containing one or more articles (title, url, snippet).
     """
-    _ensure_configured()
-    model = genai.GenerativeModel(_MODEL_NAME)
+    client = _get_client()
 
     prompt = (
         "You are a news editor. Given the raw articles below, produce a "
@@ -41,7 +40,10 @@ def summarize_articles(articles_text: str) -> str:
     )
 
     try:
-        response = model.generate_content(prompt)
+        response = client.models.generate_content(
+            model=_MODEL_NAME,
+            contents=prompt,
+        )
     except Exception as e:
         return f"Error summarizing articles: {e}"
 
